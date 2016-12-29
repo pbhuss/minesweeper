@@ -241,15 +241,51 @@ class MinesweeperSolver(object):
             self._add_leasts(at_least, sub_coords, mines - 1)
 
     def solve_one(self):
+        m = self._init_m(self.minesweeper)
+
+        at_least = dict()
+        at_least_free = dict()
+        for coords, mines in m.items():
+            self._add_leasts(at_least, coords, mines)
+            self._add_leasts(at_least_free, coords, len(coords) - mines)
+
+        prev_size = None
+        while len(m) + len(at_least) + len(at_least_free) != prev_size:
+            prev_size = len(m) + len(at_least) + len(at_least_free)
+            to_add = dict()
+            for coords1, mines1 in m.items():
+                for coords2, mines2 in m.items():
+                    if coords1 is not coords2:
+                        result = self._get_diffs(coords1, mines1, coords2, mines2, m, to_add)
+                        if result:
+                            return result
+                        result = self._get_diffs(coords2, mines2, coords1, mines1, m, to_add)
+                        if result:
+                            return result
+                result = self._get_leasts(coords1, mines1, at_least, at_least_free, 'reveal')
+                if result:
+                    return result
+                free1 = len(coords1) - mines1
+                result = self._get_leasts(coords1, free1, at_least_free, at_least, 'flag')
+                if result:
+                    return result
+            for i, j in to_add.items():
+                m[i] = j
+            # for coords, mines in m.items():
+            #     self._add_leasts(at_least, coords, mines)
+            #     self._add_leasts(at_least_free, coords, len(coords) - mines)
+
+    @staticmethod
+    def _init_m(minesweeper):
         m = dict()
         m[frozenset()] = 0
-        for coord, square in self.minesweeper._squares.items():
+        for coord, square in minesweeper._squares.items():
             if square.revealed and square.bordering > 0:
-                border_coords = self.minesweeper._get_bordering(*coord)
+                border_coords = minesweeper._get_bordering(*coord)
                 unrevealed = set()
                 flagged = set()
                 for border_coord in border_coords:
-                    border_square = self.minesweeper._squares[border_coord]
+                    border_square = minesweeper._squares[border_coord]
                     if border_square.revealed:
                         pass
                     elif border_square.flagged:
@@ -259,82 +295,35 @@ class MinesweeperSolver(object):
                 if len(unrevealed) > 0:
                     mines_unflagged = square.bordering - len(flagged)
                     m[frozenset(unrevealed)] = mines_unflagged
+        return m
 
-        at_least = dict()
-        at_least_free = dict()
-        for coords, mines in m.items():
-            self._add_leasts(at_least, coords, mines)
-            self._add_leasts(at_least_free, coords, len(coords) - mines)
+    @staticmethod
+    def _get_diffs(coords1, mines1, coords2, mines2, m, to_add):
+        if coords1.issuperset(coords2):
+            diff_coords = coords1 - coords2
+            diff_mines = mines1 - mines2
+            if diff_coords:
+                if len(diff_coords) == diff_mines:
+                    return {'action': 'flag',
+                            'coords': diff_coords}
+                if diff_mines == 0:
+                    return {'action': 'reveal',
+                            'coords': diff_coords}
+                if diff_coords not in m:
+                    to_add[frozenset(diff_coords)] = diff_mines
 
-        prev_size = None
-        iters = 0
-        while len(m) + len(at_least) + len(at_least_free) != prev_size:
-            iters += 1
-            prev_size = len(m) + len(at_least) + len(at_least_free)
-            to_add = dict()
-            for coords1, mines1 in m.items():
-                for coords2, mines2 in m.items():
-                    if coords1 is not coords2:
-                        if coords1.issuperset(coords2):
-                            diff_coords = coords1 - coords2
-                            diff_mines = mines1 - mines2
-                            if diff_coords:
-                                if len(diff_coords) == diff_mines:
-                                    if iters > 1:
-                                        print('found iter {}'.format(iters))
-                                    return {'action': 'flag',
-                                            'coords': diff_coords}
-                                if diff_mines == 0:
-                                    if iters > 1:
-                                        print('found iter {}'.format(iters))
-                                    return {'action': 'reveal',
-                                            'coords': diff_coords}
-                                if diff_coords not in m:
-                                    to_add[frozenset(diff_coords)] = diff_mines
-                        if coords2.issuperset(coords1):
-                            diff_coords = coords2 - coords1
-                            diff_mines = mines2 - mines1
-                            if diff_coords:
-                                if len(diff_coords) == diff_mines:
-                                    if iters > 1:
-                                        print('found iter {}'.format(iters))
-                                    return {'action': 'flag',
-                                            'coords': diff_coords}
-                                if diff_mines == 0:
-                                    if iters > 1:
-                                        print('found iter {}'.format(iters))
-                                    return {'action': 'reveal',
-                                            'coords': diff_coords}
-                                if diff_coords not in m:
-                                    to_add[frozenset(diff_coords)] = diff_mines
-                for coords2, mines2 in at_least.items():
-                    if coords1.issuperset(coords2):
-                        diff_coords = coords1 - coords2
-                        diff_mines = mines1 - mines2
-                        if diff_coords:
-                            if diff_mines == 0:
-                                print('found LEASTS {}'.format(iters))
-                                return {'action': 'reveal',
-                                        'coords': diff_coords}
-                            elif diff_mines != len(diff_coords):
-                                self._add_leasts(at_least_free, diff_coords, len(diff_coords) - diff_mines)
-                free1 = len(coords1) - mines1
-                for coords2, free2 in at_least_free.items():
-                    if coords1.issuperset(coords2):
-                        diff_coords = coords1 - coords2
-                        diff_free = free1 - free2
-                        if diff_coords:
-                            if diff_free == 0:
-                                print('found LEASTS FREE {}'.format(iters))
-                                return {'action': 'flag',
-                                        'coords': diff_coords}
-                            elif diff_free != len(diff_coords):
-                                self._add_leasts(at_least, diff_coords, len(diff_coords) - diff_free)
-            for i, j in to_add.items():
-                m[i] = j
-            # for coords, mines in m.items():
-            #     self._add_leasts(at_least, coords, mines)
-            #     self._add_leasts(at_least_free, coords, len(coords) - mines)
+    def _get_leasts(self, coords1, count1, at_least, at_least2, action):
+        for coords2, count2 in at_least.items():
+            if coords1.issuperset(coords2):
+                diff_coords = coords1 - coords2
+                diff_count = count1 - count2
+                if diff_coords:
+                    if diff_count == 0:
+                        return {'action': action,
+                                'coords': diff_coords}
+                    elif diff_count != len(diff_coords):
+                        self._add_leasts(at_least2, diff_coords,
+                                         len(diff_coords) - diff_count)
 
 
 class Minesweeper(object):
