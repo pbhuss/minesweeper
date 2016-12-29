@@ -1,0 +1,50 @@
+difficulties:
+  easy:
+    width: 9
+    height: 9
+    mines: 10
+  medium:
+    width: 16
+    height: 16
+    mines: 40
+  hard:
+    width: 30
+    height: 16
+    mines: 99
+  ultimate:
+    width: 30
+    height: 24
+    mines: 200
+
+music:
+  enabled: 0
+  in_game: theme.ogg
+  victory: victory.ogg
+  gameover: gameover.ogg
+
+key_bindings:
+  new_game: K_n
+  difficulty_1: K_1
+  difficulty_2: K_2
+  difficulty_3: K_3
+  difficulty_4: K_4
+  small_tiles: K_MINUS
+  large_tiles: K_EQUALS
+  print_console: K_p
+  help: K_h
+  click_swap: K_SPACE
+
+mouse_bindings:
+  reveal: 1
+  burst_reveal: 2
+  flag: 3
+
+tileset:
+  small:
+    dir: img_small/
+    tile_px: 21
+    font_px: 15
+  large:
+    dir: img/
+    tile_px: 61
+    font_px: 44
