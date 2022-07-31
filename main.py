@@ -60,9 +60,9 @@ class MinesweeperView(object):
     def redraw(self):
         if self.screen is None:
             self._init_screen()
+        light_gray = 239, 239, 237
         black = 0, 0, 0
-        white = 255, 255, 255
-        self.screen.fill(black)
+        self.screen.fill(light_gray)
         tile_px = TILESET[self.tileset]['tile_px']
         for i in range(self.minesweeper.width):
             for j in range(self.minesweeper.height):
@@ -87,7 +87,7 @@ class MinesweeperView(object):
 
         font_px = TILESET[self.tileset]['font_px']
         font = pygame.font.SysFont('Consolas', font_px, bold=1)
-        flag_remaining = font.render(str(self.minesweeper.flag_remaining), 1, white)
+        flag_remaining = font.render(str(self.minesweeper.flag_remaining), 1, black)
         self.screen.blit(
             self.tiles['flag'], (0.5 * tile_px, (self.minesweeper.height + 0.5) * tile_px))
         self.screen.blit(
@@ -100,7 +100,7 @@ class MinesweeperView(object):
             seconds = int(self.end_time - self.start_time)
         else:
             seconds = int(time.time() - self.start_time)
-        time_elapsed = font.render(str(seconds), 1, white)
+        time_elapsed = font.render(str(seconds), 1, black)
         self.screen.blit(
             self.tiles['clock'], ((self.minesweeper.width - 3) * tile_px, (self.minesweeper.height + 0.5) * tile_px))
         self.screen.blit(
