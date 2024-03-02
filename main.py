@@ -66,7 +66,6 @@ class MinesweeperState(enum.Enum):
 
 @dataclass
 class Square:
-
     revealed: bool = False
     is_mine: bool = False
     hit: bool = False
